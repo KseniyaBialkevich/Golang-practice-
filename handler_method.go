@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -13,59 +12,19 @@ import (
 	"github.com/unrolled/render"
 )
 
-var format = render.New()
+func handlersForMethods(router chi.Router, format *render.Render) {
 
-func main() {
-	router := chi.NewRouter()
+	// The GET method requests ---------------------------------------------------------------------------
 
-	router.Get("/", func(writer http.ResponseWriter, request *http.Request) {
-		result := "ok"
-		format.Text(writer, 200, result)
-	})
-
-	mMap := make(map[string]string)
-	//http://localhost:8080/process
-	//?url=https://en.wikipedia.org/wiki/URL_shortening
-	router.Post("/process", func(write http.ResponseWriter, request *http.Request) {
-		url := request.FormValue("url")
-		hash := md5.Sum([]byte(url))
-		hashString := fmt.Sprintf("%x", hash)
-		mMap[hashString] = url
-		//mMap["3c4d0ce2967a743e5ee1f2c4cb31e29e"] = "https://en.wikipedia.org/wiki/URL_shortening"
-		resultStringUrl := fmt.Sprintf("http://localhost:8080/%s", hashString)
-		format.Text(write, 200, resultStringUrl)
-	})
-
-	// //http://localhost:8080/3c4d0ce2967a743e5ee1f2c4cb31e29e
-	// router.Route("/{hash}", func(intRouter chi.Router) {
-	// 	intRouter.Get("/", func(write http.ResponseWriter, request *http.Request) {
-	// 		hashPath := chi.URLParam(request, "hash")
-	// 		orignUrl, _ := mMap[hashPath]
-	// 		format.Text(write, 200, orignUrl)
-	// 	})
-	// })
-
-	//http://localhost:8080/3c4d0ce2967a743e5ee1f2c4cb31e29e
-	router.Get("/{hash}", func(write http.ResponseWriter, request *http.Request) {
-		hashPath := chi.URLParam(request, "hash") // 3c4d0ce2967a743e5ee1f2c4cb31e29e
-		orignUrl, _ := mMap[hashPath]
-		//"https://en.wikipedia.org/wiki/URL_shortening", _ := mMap["3c4d0ce2967a743e5ee1f2c4cb31e29e"]
-		//format.Text(write, 200, orignUrl)
-		http.Redirect(write, request, orignUrl, 301)
-	})
-
-	// ***********************************************************************
-	// The GET method requests
-
-	//http://localhost:8080/test/get/value?value=my_hero
-	router.Get("/test/get/value", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/value?value=my_hero   //обработчик, который возвращает переданное значение в value
+	router.Get("/get/value", func(writer http.ResponseWriter, request *http.Request) {
 		value := request.URL.Query().Get("value")
 		format.Text(writer, 200, value)
 		//my_hero
 	})
 
-	//http://localhost:8080/test/get/random
-	router.Get("/test/get/random", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/random   //обработчик, который возвращает случайное число
+	router.Get("/get/random", func(writer http.ResponseWriter, request *http.Request) {
 		tNow := time.Now().UnixNano()
 		rand.Seed(tNow)
 		randNum := rand.Intn(110)
@@ -74,8 +33,8 @@ func main() {
 		//~84
 	})
 
-	//http://localhost:8080/test/get/sum?value1=2&value2=3
-	router.Get("/test/get/sum", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/sum?value1=2&value2=3   //обработчик, переводит оба параметра в тип число, делает их суму в переменную sum и возвращает строку
+	router.Get("/get/sum", func(writer http.ResponseWriter, request *http.Request) {
 		value1 := request.URL.Query().Get("value1")
 		intValue1, _ := strconv.Atoi(value1)
 		value2 := request.URL.Query().Get("value2")
@@ -86,8 +45,8 @@ func main() {
 		//"2 + 3 = 5"
 	})
 
-	//http://localhost:8080/test/get/many_arg?arg1=apple&arg2=banana&arg3=orange&arg4=avocado&arg5=passion fruit
-	router.Get("/test/get/many_arg", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/many_arg?arg1=apple&arg2=banana&arg3=orange&arg4=avocado&arg5=passion fruit   //возвращает последовательность, разделенную запятой
+	router.Get("/get/many_arg", func(writer http.ResponseWriter, request *http.Request) {
 		arg1 := request.URL.Query().Get("arg1")
 		arg2 := request.URL.Query().Get("arg2")
 		arg3 := request.URL.Query().Get("arg3")
@@ -102,8 +61,8 @@ func main() {
 		//Library record: apple, banana, orange, avocado, passion fruit.
 	})
 
-	//http://localhost:8080/test/get/sumti_sum?arg=1,2,3,4,5,6
-	router.Get("/test/get/sumti_sum", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/sumti_sum?arg=1,2,3,4,5,6   //выделить из этого аргуметра все числа, сложить их и вывести все числа и сумму
+	router.Get("/get/sumti_sum", func(writer http.ResponseWriter, request *http.Request) {
 		arg := request.URL.Query().Get("arg")
 		arrayString := strings.Split(arg, ",")
 		len := len(arrayString)
@@ -123,8 +82,8 @@ func main() {
 		//1 + 2 + 3 + 4 + 5 + 6 = 21
 	})
 
-	//http://localhost:8080/test/get/sumti_sum_rand_separator?args=1*2*3&separator=*
-	router.Get("/test/get/sumti_sum_rand_separator", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/sumti_sum_rand_separator?args=1*2*3&separator=*   //числа разделены символом который указан в separator, вывести сумму
+	router.Get("/get/sumti_sum_rand_separator", func(writer http.ResponseWriter, request *http.Request) {
 		args := request.URL.Query().Get("args")
 		separator := request.URL.Query().Get("separator")
 		arrayArg := strings.Split(args, separator)
@@ -143,8 +102,8 @@ func main() {
 		//1 + 2 + 3 = 6
 	})
 
-	//http://localhost:8080/test/get/replace?args=cucumber,broccoli,tomato,avocado&separator=-
-	router.Get("/test/get/replace", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/replace?args=cucumber,broccoli,tomato,avocado&separator=- // заменить запятую на переданный в separator символ и вернуть строку
+	router.Get("/get/replace", func(writer http.ResponseWriter, request *http.Request) {
 		args := request.URL.Query().Get("args")
 		separator := request.URL.Query().Get("separator")
 		arrayArg := strings.Split(args, ",")
@@ -153,8 +112,8 @@ func main() {
 		//cucumber broccoli tomato avocado
 	})
 
-	//http://localhost:8080/test/get/replace_by?args=1a*2b*3c&separator_orign=*&separator_new=-
-	router.Get("/test/get/replace_by", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/get/replace_by?args=1a*2b*3c&separator_orign=*&separator_new=-   //заменить separator_orign на переданный в separator_new символ
+	router.Get("/get/replace_by", func(writer http.ResponseWriter, request *http.Request) {
 		args := request.URL.Query().Get("args")
 		separatorOrigin := request.URL.Query().Get("separator_orign")
 		separatorNew := request.URL.Query().Get("separator_new")
@@ -164,29 +123,28 @@ func main() {
 		//1a-2b-3c
 	})
 
-	//************************************************************************
-	// The POST method requests
+	// The POST method requests ---------------------------------------------------------------------------
 
-	//http://localhost:8080/test/post/same
-	//?value=Aloha!
-	router.Post("/test/post/same", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/post/same   //обработчик принимает параметр с название value в теле запроса и возвращает его
+	//value=Aloha!
+	router.Post("/post/same", func(writer http.ResponseWriter, request *http.Request) {
 		value := request.FormValue("value")
 		format.Text(writer, 200, value)
+		//Aloha!
 	})
-	//Aloha!
 
-	//http://localhost:8080/test/post/concat
-	//?val1=butter&val2=fly
-	router.Post("/test/post/concat", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/post/concat   //принимает два параметра в теле запроса и возвращает их конкатенацию
+	//val1=butter val2=fly
+	router.Post("/post/concat", func(writer http.ResponseWriter, request *http.Request) {
 		val1 := request.FormValue("val1")
 		val2 := request.FormValue("val2")
 		format.Text(writer, 200, val1+val2)
 		//butterfly
 	})
 
-	//http://localhost:8080/test/post/sum
-	//?int1=3&int2=6
-	router.Post("/test/post/sum", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/post/sum   //переводит в числовой тип, делает сумму и возвращает строку
+	//int1=3 int2=6
+	router.Post("/post/sum", func(writer http.ResponseWriter, request *http.Request) {
 		int1 := request.FormValue("int1")
 		int2 := request.FormValue("int2")
 		int1Int, _ := strconv.Atoi(int1)
@@ -197,9 +155,9 @@ func main() {
 		//3 + 6 = 9
 	})
 
-	//http://localhost:8080/test/post/multi_for
-	//?arg=Monday&arg=Tuesday&arg=Wednesday&arg=Thursday&arg=Friday
-	router.Post("/test/post/multi_for", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/post/multi_for   //принимает параметры с одинаковым именем (arg), возвращает последовательность, разделенную запятыми
+	//arg=Monday arg=Tuesday arg=Wednesday arg=Thursday arg=Friday
+	router.Post("/post/multi_for", func(writer http.ResponseWriter, request *http.Request) {
 		request.ParseForm()
 		argsMap := request.Form //map[arg:[Monday Tuesday Wednesday Thursday Friday]]
 		argsArray := argsMap["arg"]
@@ -208,9 +166,9 @@ func main() {
 		//Monday, Tuesday, Wednesday, Thursday, Friday
 	})
 
-	//http://localhost:8080/test/post/multi_for/many_keys
-	//?arg1=Monday&arg2=Tuesday&arg3=Wednesday&arg4=Thursday&arg5=Friday
-	router.Post("/test/post/multi_for", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/post/multi_for/many_keys   //принимает параметры с разными именами, возвращает последовательность, разделенную запятыми
+	//arg1=Monday arg2=Tuesday arg3=Wednesday arg4=Thursday arg5=Friday
+	router.Post("/post/multi_for", func(writer http.ResponseWriter, request *http.Request) {
 		request.ParseForm()
 		argsMap := request.Form //map[arg1:[Monday] arg2:[Tuesday] arg3:[Wednesday] arg4:[Thursday] arg5:[Friday]]
 		argsArray := []string{}
@@ -224,18 +182,17 @@ func main() {
 		//Monday, Tuesday, Wednesday, Thursday, Friday
 	})
 
-	//************************************************************************
-	// Path (Путь)
+	// Path (Путь) -----------------------------------------------------------------------------------------
 
-	//http://localhost:8080/test/path_parameter/Minsk
-	router.Get("/test/path_parameter/{paramPath}", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/path_parameter/Minsk   //возвращает значение которое было передано
+	router.Get("/path_parameter/{paramPath}", func(writer http.ResponseWriter, request *http.Request) {
 		paramPath := chi.URLParam(request, "paramPath")
 		format.Text(writer, 200, paramPath)
 		//Minsk
 	})
 
-	//http://localhost:8080/test/path_parameter/sum/30/69
-	router.Get("/test/path_parameter/sum/{paramPath1}/{paramPath2}", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/path_parameter/sum/30/69   //переводит параметры в число, делает их суму и возвращает строку
+	router.Get("/path_parameter/sum/{paramPath1}/{paramPath2}", func(writer http.ResponseWriter, request *http.Request) {
 		paramPath1 := chi.URLParam(request, "paramPath1")
 		paramPath2 := chi.URLParam(request, "paramPath2")
 		param1Int, _ := strconv.Atoi(paramPath1)
@@ -246,8 +203,8 @@ func main() {
 		//30 + 69 = 99
 	})
 
-	//http://localhost:8080/test/path_parameter/many_args/Who/is/John/Gold
-	router.Get("/test/path_parameter/many_args/{paramPath1}/{paramPath2}/{paramPath3}/{paramPath4}", func(writer http.ResponseWriter, request *http.Request) {
+	//http://localhost:8080/test/path_parameter/many_args/Who/is/John/Gold   //возвращает последовательность, разделенную пробелами
+	router.Get("/path_parameter/many_args/{paramPath1}/{paramPath2}/{paramPath3}/{paramPath4}", func(writer http.ResponseWriter, request *http.Request) {
 		paramsPath1 := chi.URLParam(request, "paramPath1")
 		paramsPath2 := chi.URLParam(request, "paramPath2")
 		paramsPath3 := chi.URLParam(request, "paramPath3")
@@ -258,8 +215,4 @@ func main() {
 		//Who is John Gold?
 	})
 
-	//************************************************************************
-
-	http.ListenAndServe(":8080", router)
 }
-
