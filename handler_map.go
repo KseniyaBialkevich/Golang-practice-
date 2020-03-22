@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,17 +25,25 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		ageInt, _ := strconv.Atoi(age)
 		sex := request.FormValue("sex")
 
-		mapUser[idInt] = User{idInt, name, surname, ageInt, sex}
+		_, ok := mapUser[idInt]
 
-		var result []string
-		for _, value := range mapUser {
-			resultString := value.String()
-			//resultString := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\n", value.ID, value.Name, value.Surname, value.Age, value.Sex)
-			result = append(result, resultString)
+		if ok { //проверка на существующего пользователя
+			result := fmt.Sprintf("User with id %d already exist!", idInt)
+			format.Text(write, 404, result)
+		} else {
+
+			mapUser[idInt] = User{idInt, name, surname, ageInt, sex}
+
+			var result []string
+			for _, value := range mapUser {
+				resultString := value.String()
+				//resultString := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\n", value.ID, value.Name, value.Surname, value.Age, value.Sex)
+				result = append(result, resultString)
+			}
+
+			resultUsers := strings.Join(result, "\n")
+			format.Text(write, 200, resultUsers)
 		}
-
-		resultUsers := strings.Join(result, "\n")
-		format.Text(write, 200, resultUsers)
 	})
 
 	//http://localhost:8080/map/user/id/111 //возвращает пользователя по id из map
@@ -78,19 +87,15 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		}
 	})
 
-	//http://localhost:8080/map/user/put/id/111 //обновляет переданные параметры, принятые в теле запроса
+	//http://localhost:8080/map/user/put/id/111 //обновляет переданные параметры по id, принятые в теле запроса
 	//surname=Jerome age=92
 	router.Put("/user/put/id/{id}", func(write http.ResponseWriter, request *http.Request) {
 		id := chi.URLParam(request, "id")
 		idInt, _ := strconv.Atoi(id)
 
-		//idForm := request.FormValue("id")
-		//idFormInt, _ := strconv.Atoi(idForm)
-		//nameForm := request.FormValue("name")
 		surnameForm := request.FormValue("surname")
 		ageForm := request.FormValue("age")
 		ageFormInt, _ := strconv.Atoi(ageForm)
-		//sexForm := request.FormValue("sex")
 
 		value, ok := mapUser[idInt]
 
@@ -98,10 +103,20 @@ func handlersForMap(router chi.Router, format *render.Render) {
 			value.Surname = surnameForm
 			value.Age = ageFormInt
 			mapUser[idInt] = value
+			format.Text(write, 200, "Data has been updated successfully!\n\n")
 			format.Text(write, 200, value.String())
 		} else {
 			format.Text(write, 404, "User is not found.\n")
 		}
 	})
 
+	//http://localhost:8080/map/user/ids/111,222,999 //принимает строку с идентификаторами пользователей разделенными запятыми
+	router.Get("/user/ids/{ids}", func(write http.ResponseWriter, request *http.Request) {
+		ids := chi.URLParam(request, "ids")
+
+		idsArray := strings.Split(ids, ",")
+
+		for indx, value := idsArray
+
+	})
 }
