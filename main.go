@@ -19,7 +19,6 @@ func main() {
 	})
 
 	handlersForURLShortening(router, format)
-
 	handlersForURLTime(router, format)
 
 	router.Route("/struct", func(structRouter chi.Router) {
@@ -30,7 +29,9 @@ func main() {
 		handlersForArray(arrayRouter, format)
 	})
 
-	handlersForMap(router, format)
+	router.Route("/map", func(mapRouter chi.Router) {
+		handlersForMap(mapRouter, format)
+	})
 
 	fmt.Println("Server is running!")
 	http.ListenAndServe(":8080", router)
