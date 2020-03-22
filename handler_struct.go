@@ -38,36 +38,38 @@ func handlersForStruct(router chi.Router, format *render.Render) {
 		format.Text(write, 200, lastUser)
 	})
 
+	var userInfo string
+
 	//http://localhost:8080/struct/user/name/Ada вернуть через путь параметр "name" пользователя
 	router.Get("/user/name/{name}", func(write http.ResponseWriter, request *http.Request) {
 		name := chi.URLParam(request, "name")
-		lastUser = name
+		userInfo = name
 
-		format.Text(write, 200, lastUser)
+		format.Text(write, 200, userInfo)
 	})
 
 	//http://localhost:8080/struct/user/surname/Lovelace   вернуть через путь параметр "surname" пользователя
 	router.Get("/user/surname/{surname}", func(write http.ResponseWriter, request *http.Request) {
 		surname := chi.URLParam(request, "surname")
-		lastUser = lastUser + " " + surname
+		userInfo = userInfo + " " + surname
 
-		format.Text(write, 200, lastUser)
+		format.Text(write, 200, userInfo)
 	})
 
 	//http://localhost:8080/struct/user/age/37   вернуть через путь параметр "age" пользователя
 	router.Get("/user/age/{age}", func(write http.ResponseWriter, request *http.Request) {
 		age := chi.URLParam(request, "age")
-		lastUser = lastUser + " " + age
+		userInfo = userInfo + " " + age
 
-		format.Text(write, 200, lastUser)
+		format.Text(write, 200, userInfo)
 	})
 
 	//http://localhost:8080/struct/user/sex/female   вернуть через путь параметр "sex" пользователя
 	router.Get("/user/sex/{sex}", func(write http.ResponseWriter, request *http.Request) {
 		sex := chi.URLParam(request, "sex")
-		lastUser = lastUser + " " + sex
+		userInfo = userInfo + " " + sex
 
-		format.Text(write, 200, lastUser)
+		format.Text(write, 200, userInfo)
 	})
 
 }
