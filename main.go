@@ -51,3 +51,19 @@ func (arg User) String() string {
 	result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\n", arg.ID, arg.Name, arg.Surname, arg.Age, arg.Sex)
 	return result
 }
+
+//структура, в которой хранятся данные пользователя с дополнительным полем Friend
+type UserWithFriends struct {
+	ID      int
+	Name    string
+	Surname string
+	Age     int
+	Sex     string
+	Friend  []int //поле является списком идентbфикаторов других пользователей
+}
+
+//метод ToString(), форматирующий структуру UserWithFriends в тип string
+func (arg UserWithFriends) ToString() string {
+	result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\nFriends: %d\n", arg.ID, arg.Name, arg.Surname, arg.Age, arg.Sex, arg.Friend)
+	return result
+}

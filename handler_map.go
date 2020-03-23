@@ -35,6 +35,7 @@ func handlersForMap(router chi.Router, format *render.Render) {
 			mapUser[idInt] = User{idInt, name, surname, ageInt, sex}
 
 			var result []string
+
 			for _, value := range mapUser {
 				resultString := value.String()
 				//resultString := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\n", value.ID, value.Name, value.Surname, value.Age, value.Sex)
@@ -70,7 +71,7 @@ func handlersForMap(router chi.Router, format *render.Render) {
 
 			for _, value := range mapUser {
 				if name == value.Name {
-					result = append(result, value.String())
+					result = append(result, value.String()) // создание среза пользователей с одинаковыми именами
 					isFound = true
 				}
 			}
@@ -110,13 +111,144 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		}
 	})
 
-	//http://localhost:8080/map/user/ids/111,222,999 //принимает строку с идентификаторами пользователей разделенными запятыми
-	router.Get("/user/ids/{ids}", func(write http.ResponseWriter, request *http.Request) {
-		ids := chi.URLParam(request, "ids")
+	//http://localhost:8080/map/user/ids?arg=111,222,999 //принимает строку с идентификаторами пользователей разделенными запятыми
+	router.Get("/user/ids", func(write http.ResponseWriter, request *http.Request) {
+		ids := request.URL.Query().Get("arg")
 
 		idsArray := strings.Split(ids, ",")
 
-		for indx, value := idsArray
+		foundIds := make([]string, 0)
+		notFoundIds := make([]string, 0)
 
+		for _, elem := range idsArray {
+			elemInt, _ := strconv.Atoi(elem)
+
+			value, ok := mapUser[elemInt]
+			if ok {
+				result := value.String()
+				foundIds = append(foundIds, result)
+			} else {
+				notFoundIds = append(notFoundIds, elem)
+			}
+		}
+
+		if len(foundIds) > 0 {
+			result := strings.Join(foundIds, "\n")
+			format.Text(write, 200, result)
+		}
+		if len(notFoundIds) > 0 { //если есть ненайденные пользователи
+			resultString := strings.Join(notFoundIds, ",")
+			result := fmt.Sprintf("\nId(s): %s not found!", resultString)
+			format.Text(write, 404, result)
+		}
+	})
+
+	//http://localhost:8080/map/user/names?arg=Winston,Ada,Barry //принимат список имен, разделенных запятой
+	router.Get("/user/names", func(write http.ResponseWriter, request *http.Request) {
+		names := request.URL.Query().Get("arg")
+
+		namesArray := strings.Split(names, ",")
+
+		resultArray := make([]string, 0)
+
+		for _, elem := range namesArray {
+
+			for _, value := range mapUser {
+
+				if elem == value.Name {
+					result := value.String()
+					resultArray = append(resultArray, result)
+				}
+			}
+		}
+		result := strings.Join(resultArray, "\n")
+		format.Text(write, 200, result)
+	})
+
+	//http://localhost:8080/map/user/and?name=Winston&age=91 //возвращает пользователей у которых имя И возраст соответствуют
+	router.Get("/user/and", func(write http.ResponseWriter, request *http.Request) {
+		name := request.URL.Query().Get("name")
+		age := request.URL.Query().Get("age")
+		ageInt, _ := strconv.Atoi(age)
+
+		resultUsersArray := make([]string, 0)
+
+		for _, value := range mapUser {
+			if name == value.Name && ageInt == value.Age {
+				result := value.String()
+				resultUsersArray = append(resultUsersArray, result)
+			}
+		}
+
+		result := strings.Join(resultUsersArray, "\n")
+		format.Text(write, 200, result)
+
+		if len(resultUsersArray) < 1 { //если совпадения не найдены
+			format.Text(write, 404, "No matches found!")
+		}
+	})
+
+	//http://localhost:8080/map/user/or?name=Winston&age=91 //возвращает пользователей у которых имя ИЛИ возраст соответствуют
+	router.Get("/user/or", func(write http.ResponseWriter, request *http.Request) {
+		name := request.URL.Query().Get("name")
+		age := request.URL.Query().Get("age")
+		ageInt, _ := strconv.Atoi(age)
+
+		resultUsersArray := make([]string, 0)
+
+		for _, value := range mapUser {
+			if name == value.Name || ageInt == value.Age {
+				result := value.String()
+				resultUsersArray = append(resultUsersArray, result)
+			}
+		}
+
+		result := strings.Join(resultUsersArray, "\n")
+		format.Text(write, 200, result)
+
+		if len(resultUsersArray) < 1 { //если совпадения не найдены
+			format.Text(write, 404, "No matches found!")
+		}
+	})
+
+	//http://localhost:8080/map/user/friend //принимает спискок из id других пользователей
+	mapUserWithFriends := make(map[int]UserWithFriends)
+
+	router.Post("/user/friend", func(write http.ResponseWriter, request *http.Request) {
+		id := request.FormValue("id")
+		idInt, _ := strconv.Atoi(id)
+		name := request.FormValue("name")
+		surname := request.FormValue("surname")
+		age := request.FormValue("age")
+		ageInt, _ := strconv.Atoi(age)
+		sex := request.FormValue("sex")
+		friend := request.FormValue("friend")
+		friendArray := strings.Split(friend, ",")
+
+		friendsArray := make([]int, 0)
+		for _, elem := range friendArray {
+			friendInt, _ := strconv.Atoi(elem)
+			friendsArray = append(friendsArray, friendInt)
+		}
+
+		_, ok := mapUserWithFriends[idInt]
+
+		if ok { //проверка на существующего пользователя
+			result := fmt.Sprintf("User with id %d already exist!", idInt)
+			format.Text(write, 404, result)
+		} else {
+
+			mapUserWithFriends[idInt] = UserWithFriends{idInt, name, surname, ageInt, sex, friendsArray}
+
+			var result []string
+
+			for _, value := range mapUserWithFriends {
+				resultString := value.ToString()
+				result = append(result, resultString)
+			}
+
+			resultUsersWithFriends := strings.Join(result, "\n")
+			format.Text(write, 200, resultUsersWithFriends)
+		}
 	})
 }
