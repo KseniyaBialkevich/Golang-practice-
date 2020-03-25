@@ -21,6 +21,10 @@ func main() {
 	handlersForURLShortening(router, format)
 	handlersForURLTime(router, format)
 
+	router.Route("/user", func(methodRouter chi.Router) {
+		handlersForURLFile(methodRouter, format)
+	})
+
 	router.Route("/struct", func(structRouter chi.Router) {
 		handlersForStruct(structRouter, format)
 	})
@@ -39,11 +43,11 @@ func main() {
 
 //общая структура, в которой хранятся данные пользователя
 type User struct {
-	ID      int
-	Name    string
-	Surname string
-	Age     int
-	Sex     string
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+	Age     int    `json:"age"`
+	Sex     string `json:"sex"`
 }
 
 //метод String(), форматирующий структуру User в тип string
