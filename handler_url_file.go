@@ -30,6 +30,11 @@ type Link struct {
 	AccessTime []time.Time `json:"accessTime"`
 }
 
+type JSONResult struct {
+	Count int      `json:"count"`
+	Times []string `json:"times"`
+}
+
 func handlersForURLFile(router chi.Router, format *render.Render) {
 
 	mMap := map[string]Link{}
@@ -37,14 +42,12 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 	path, err := os.Getwd() //найти путь к текущему каталогу
 	if err != nil {
 		log.Fatalln(err)
-		return
 	}
 	pathToFile := fmt.Sprintf("%s/history.txt", path) //путь файла
 
 	data, err := ioutil.ReadFile(pathToFile) //чтение файла
 	if err != nil {
-		fmt.Println("File reading error", err)
-		return
+		log.Fatalln(err)
 	}
 
 	json.Unmarshal(data, &mMap) //переобразование байтовых данные json в map
@@ -59,14 +62,17 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 
 		mMap[hashString] = Link{url, times}
 
-		dataResult, err := json.Marshal(&mMap) //преобразование данных map в байтовые данные/в json
+		dataResult, err := json.Marshal(mMap) //преобразование данных map в байтовые данные/в json
 		if err != nil {
-			println(err)
+			log.Println(err)
+			format.Text(write, 503, "Unable to save data.")
+			return
 		}
 
 		err = ioutil.WriteFile(pathToFile, dataResult, 0666) //запись данных в файл
 		if err != nil {
-			format.Text(write, 404, "Writing a file is not possible.")
+			log.Println(err)
+			format.Text(write, 503, "Unable to save data.")
 			return
 		}
 
@@ -78,17 +84,27 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 	router.Get("/{hash}", func(write http.ResponseWriter, request *http.Request) {
 		hashPath := chi.URLParam(request, "hash")
 
-		copyOfLink, _ := mMap[hashPath]
+		copyOfLink, isFound := mMap[hashPath]
+		if !isFound {
+			format.Text(write, 404, "No data was found for this hash.")
+			return
+		}
 
 		copyOfLink.AccessTime = append(copyOfLink.AccessTime, time.Now())
 
 		mMap[hashPath] = copyOfLink
 
-		dataResult, _ := json.Marshal(mMap) //преобразование
-
-		err := ioutil.WriteFile(pathToFile, dataResult, 0666) //запись данных в файл
+		dataResult, err := json.Marshal(mMap) //преобразование
 		if err != nil {
-			format.Text(write, 404, "Writing a file is not possible.")
+			log.Println(err)
+			format.Text(write, 503, "Unable to save data.")
+			return
+		}
+
+		err = ioutil.WriteFile(pathToFile, dataResult, 0666) //запись данных в файл
+		if err != nil {
+			log.Println(err)
+			format.Text(write, 503, "Unable to save data.")
 			return
 		}
 
@@ -101,28 +117,19 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 	router.Get("/{hash}/times", func(write http.ResponseWriter, request *http.Request) {
 		hashPath := chi.URLParam(request, "hash")
 
-		link, _ := mMap[hashPath]
+		link, isFound := mMap[hashPath]
+		if !isFound {
+			format.Text(write, 404, "No data was found for this hash.")
+			return
+		}
 
 		times := link.AccessTime
 
 		count := len(times)
 
-		type JSONResult struct {
-			Count int      `json:"count"`
-			Times []string `json:"times"`
-		}
-
 		strTimes := timesArrayToString(times)
 
 		jsonResult := JSONResult{count, strTimes}
-
-		dataResult, _ := json.Marshal(mMap) //преобразование
-
-		err := ioutil.WriteFile(pathToFile, dataResult, 0666) //запись данных в файл
-		if err != nil {
-			format.Text(write, 404, "Writing a file is not possible.")
-			return
-		}
 
 		format.JSON(write, 200, jsonResult)
 	})
