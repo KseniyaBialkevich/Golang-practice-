@@ -25,6 +25,15 @@ func timesArrayToString(times []time.Time) []string {
 	return strTimes
 }
 
+func check(err error, write http.ResponseWriter, format *render.Render) {
+	log.Println(err)
+	format.Text(write, 503, "Unable to save data.")
+}
+
+func found(isFound bool, write http.ResponseWriter, format *render.Render) {
+	format.Text(write, 404, "No data was found for this hash.")
+}
+
 type Link struct {
 	OrignURL   string      `json:"orignURL"`
 	AccessTime []time.Time `json:"accessTime"`
@@ -64,15 +73,13 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 
 		dataResult, err := json.Marshal(mMap) //преобразование данных map в байтовые данные/в json
 		if err != nil {
-			log.Println(err)
-			format.Text(write, 503, "Unable to save data.")
+			check(err, write, format)
 			return
 		}
 
 		err = ioutil.WriteFile(pathToFile, dataResult, 0666) //запись данных в файл
 		if err != nil {
-			log.Println(err)
-			format.Text(write, 503, "Unable to save data.")
+			check(err, write, format)
 			return
 		}
 
@@ -86,7 +93,7 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 
 		copyOfLink, isFound := mMap[hashPath]
 		if !isFound {
-			format.Text(write, 404, "No data was found for this hash.")
+			found(isFound, write, format)
 			return
 		}
 
@@ -96,15 +103,13 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 
 		dataResult, err := json.Marshal(mMap) //преобразование
 		if err != nil {
-			log.Println(err)
-			format.Text(write, 503, "Unable to save data.")
+			check(err, write, format)
 			return
 		}
 
 		err = ioutil.WriteFile(pathToFile, dataResult, 0666) //запись данных в файл
 		if err != nil {
-			log.Println(err)
-			format.Text(write, 503, "Unable to save data.")
+			check(err, write, format)
 			return
 		}
 
@@ -119,7 +124,7 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 
 		link, isFound := mMap[hashPath]
 		if !isFound {
-			format.Text(write, 404, "No data was found for this hash.")
+			found(isFound, write, format)
 			return
 		}
 
