@@ -25,6 +25,10 @@ func main() {
 		handlersForURLFile(methodRouter, format)
 	})
 
+	router.Route("/expire", func(methodRouter chi.Router) {
+		handlersForURLExpire(methodRouter, format)
+	})
+
 	router.Route("/struct", func(structRouter chi.Router) {
 		handlersForStruct(structRouter, format)
 	})
@@ -50,12 +54,6 @@ type User struct {
 	Sex     string `json:"sex"`
 }
 
-//метод String(), форматирующий структуру User в тип string
-func (arg User) String() string {
-	result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\n", arg.ID, arg.Name, arg.Surname, arg.Age, arg.Sex)
-	return result
-}
-
 //структура, в которой хранятся данные пользователя с дополнительным полем Friend
 type UserWithFriends struct {
 	ID      int
@@ -64,6 +62,12 @@ type UserWithFriends struct {
 	Age     int
 	Sex     string
 	Friend  []int //поле является списком идентbфикаторов других пользователей
+}
+
+//метод String(), форматирующий структуру User в тип string
+func (arg User) String() string {
+	result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\n", arg.ID, arg.Name, arg.Surname, arg.Age, arg.Sex)
+	return result
 }
 
 //метод ToString(), форматирующий структуру UserWithFriends в тип string

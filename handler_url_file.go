@@ -61,7 +61,8 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 
 	json.Unmarshal(data, &mMap) //переобразование байтовых данные json в map
 
-	//http://localhost:8080/user/process?url=https://en.wikipedia.org/wiki/URL_shortening
+	//http://localhost:8080/user/process
+	//url=https://en.wikipedia.org/wiki/URL_shortening expire=3m
 	router.Post("/process", func(write http.ResponseWriter, request *http.Request) {
 		url := request.FormValue("url")
 		hash := md5.Sum([]byte(url))
