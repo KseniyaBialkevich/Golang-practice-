@@ -28,18 +28,17 @@ func timesArrayToStringI(times []time.Time) []string {
 
 func checkI(err error, write http.ResponseWriter, format *render.Render) {
 	log.Println(err)
-	format.Text(write, 503, "Unable to save data.")
+	format.Text(write, 500, "Unable to save data.")
 }
 
 func foundI(isFound bool, write http.ResponseWriter, format *render.Render) {
 	format.Text(write, 404, "No data was found for this hash.")
 }
 
-func calcExpireTime(expire string) (time.Time, bool) { //вычисление, когда истечет время от времени создания сылки
+func calcExpireTime(expire string) (time.Time, error) { //вычисление, когда истечет время от времени создания сылки
 
 	if expire == "" || len(expire) < 1 {
-		log.Print()
-		return time.Time{}, false
+		return time.Time{}, fmt.Errorf("unit of time not found")
 	}
 
 	len := len(expire) //длина строки
@@ -50,7 +49,7 @@ func calcExpireTime(expire string) (time.Time, bool) { //вычисление, �
 	numberInt, err := strconv.Atoi(number) //int
 	if err != nil {
 		log.Print(err)
-		return time.Time{}, false //вернуть пустое время и false
+		return time.Time{}, fmt.Errorf("unit of time not found")
 	}
 
 	createTime := time.Now() //время создания ссылки
@@ -67,9 +66,9 @@ func calcExpireTime(expire string) (time.Time, bool) { //вычисление, �
 	case "s":
 		expireTime = createTime.Add(time.Second * time.Duration(numberInt))
 	default:
-		return time.Time{}, false
+		return time.Time{}, fmt.Errorf("unit of time not found")
 	}
-	return expireTime, true
+	return expireTime, nil
 }
 
 type LinkI struct {
@@ -104,14 +103,15 @@ func handlersForURLExpire(router chi.Router, format *render.Render) {
 	//url=https://en.wikipedia.org/wiki/URL_shortening expire=3m
 	router.Post("/process", func(write http.ResponseWriter, request *http.Request) {
 		url := request.FormValue("url")
+
 		hash := md5.Sum([]byte(url))
 		hashString := fmt.Sprintf("%x", hash)
 
 		expire := request.FormValue("expire")
 
-		expireTime, ok := calcExpireTime(expire) //вызов функции
-		if !ok {
-			format.Text(write, 404, "Unit of time not found.")
+		expireTime, err := calcExpireTime(expire) //вызов функции
+		if err != nil {
+			format.Text(write, 500, "unit of time not found")
 			return
 		}
 

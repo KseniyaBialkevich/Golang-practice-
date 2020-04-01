@@ -65,6 +65,7 @@ func handlersForURLFile(router chi.Router, format *render.Render) {
 	//url=https://en.wikipedia.org/wiki/URL_shortening expire=3m
 	router.Post("/process", func(write http.ResponseWriter, request *http.Request) {
 		url := request.FormValue("url")
+
 		hash := md5.Sum([]byte(url))
 		hashString := fmt.Sprintf("%x", hash)
 

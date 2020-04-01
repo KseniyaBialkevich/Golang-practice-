@@ -37,6 +37,7 @@ func handlersForURLShortening(router chi.Router, format *render.Render) {
 		http.Redirect(write, request, orignURL, 301) // перенаправление
 	})
 
+
 	// //http://localhost:8080/3c4d0ce2967a743e5ee1f2c4cb31e29e // либо через "внутренний" роутер intRouter
 	// router.Route("/{hash}", func(intRouter chi.Router) {
 	// 	intRouter.Get("/", func(write http.ResponseWriter, request *http.Request) {

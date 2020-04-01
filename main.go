@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi"
 	"github.com/unrolled/render"
@@ -12,6 +14,10 @@ func main() {
 	format := render.New()
 	router := chi.NewRouter()
 
+	workDir, _ := os.Getwd()
+	filesDir := filepath.Join(workDir, "public")
+	FileServer(router, "", "/public", http.Dir(filesDir))
+
 	handlersForPractice(router, format)
 
 	router.Route("/test", func(methodRouter chi.Router) {
@@ -19,6 +25,7 @@ func main() {
 	})
 
 	handlersForURLShortening(router, format)
+
 	handlersForURLTime(router, format)
 
 	router.Route("/user", func(methodRouter chi.Router) {
@@ -28,6 +35,8 @@ func main() {
 	router.Route("/expire", func(methodRouter chi.Router) {
 		handlersForURLExpire(methodRouter, format)
 	})
+
+	handlersForImageSharing(router, format)
 
 	router.Route("/struct", func(structRouter chi.Router) {
 		handlersForStruct(structRouter, format)
