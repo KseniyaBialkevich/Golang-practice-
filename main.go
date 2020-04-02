@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -51,7 +52,10 @@ func main() {
 	})
 
 	fmt.Println("Server is running!")
-	http.ListenAndServe(":8080", router)
+	err := http.ListenAndServe(":8080", router)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 //общая структура, в которой хранятся данные пользователя
