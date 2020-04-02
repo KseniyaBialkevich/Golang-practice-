@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -85,6 +86,15 @@ func handlersForImageSharing(router chi.Router, format *render.Render) {
 		log.Fatalln(err)
 	}
 
+	pathToHistory := fmt.Sprintf("%s/img_history.json", path) //путь файла
+
+	dataBytes, err := ioutil.ReadFile(pathToHistory) //чтение файла
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	json.Unmarshal(dataBytes, &mapImgTime) //переобразование байтовых данные json в mapImgTime
+
 	//http://localhost:8080/image
 	//upload = image.png expire = 10s
 	router.Post("/image", func(write http.ResponseWriter, request *http.Request) {
@@ -159,6 +169,18 @@ func handlersForImageSharing(router chi.Router, format *render.Render) {
 			return
 		}
 
+		dataBytes, err := json.Marshal(mapImgTime) //преобразование данных map в байтовые данные/в json
+		if err != nil {
+			check(err, write, format)
+			return
+		}
+
+		err = ioutil.WriteFile(pathToHistory, dataBytes, 0666) //запись данных в файл
+		if err != nil {
+			check(err, write, format)
+			return
+		}
+
 		format.Text(write, 200, "File uploaded successfully!")
 		imageAdress := fmt.Sprintf("\nThe address of your uploaded image:\nhttp://localhost:8080/public/imgs/%s", imgHashAdress)
 		format.Text(write, 200, imageAdress)
@@ -184,6 +206,18 @@ func handlersForImageSharing(router chi.Router, format *render.Render) {
 		copyOfAdress.AccessTime = append(copyOfAdress.AccessTime, time.Now())
 
 		mapImgTime[imgHashName] = copyOfAdress
+
+		dataBytes, err := json.Marshal(mapImgTime) //преобразование данных map в байтовые данные/в json
+		if err != nil {
+			check(err, write, format)
+			return
+		}
+
+		err = ioutil.WriteFile(pathToHistory, dataBytes, 0666) //запись данных в файл
+		if err != nil {
+			check(err, write, format)
+			return
+		}
 
 		pathFile := path + "/public/imgs/" + imgHashName // путь к изображению
 
