@@ -8,10 +8,34 @@ import (
 	"path/filepath"
 
 	"github.com/go-chi/chi"
+	"github.com/jinzhu/gorm"
 	"github.com/unrolled/render"
+
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
+func getPath() string {
+	path, err := os.Getwd() //найти путь к текущему каталогу
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return path
+}
+
+var path string = getPath()
+
+func OpenDB(path string) *gorm.DB {
+	db, err := gorm.Open("sqlite3", path+"/history_states.db")
+	if err != nil {
+		panic("failed to connect database")
+	}
+	return db
+}
+
+var db *gorm.DB = OpenDB(path)
+
 func main() {
+
 	format := render.New()
 	router := chi.NewRouter()
 
@@ -51,11 +75,16 @@ func main() {
 		handlersForMap(mapRouter, format)
 	})
 
+	router.Route("/gorm", func(methodRouter chi.Router) {
+		gormForStates(methodRouter, format)
+	})
+
 	fmt.Println("Server is running!")
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer db.Close()
 }
 
 //общая структура, в которой хранятся данные пользователя
