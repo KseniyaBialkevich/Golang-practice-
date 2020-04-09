@@ -29,7 +29,7 @@ type AccessTimeURL struct {
 	AccessTime time.Time
 }
 
-//Базу данных открываем/закрываем в файле main
+//Базу данных открываем/закрываем в файле main.go
 
 func gormForStates(router chi.Router, format *render.Render) {
 
@@ -80,10 +80,10 @@ func gormForStates(router chi.Router, format *render.Render) {
 		}
 
 		// Объявлении экземпляра структуры в accessTimeUrl
-		accessTimeUrl := AccessTimeURL{LinkID: linkInfo.ID, AccessTime: time.Now()}
+		accessTimeURL := AccessTimeURL{LinkID: linkInfo.ID, AccessTime: time.Now()}
 
 		// Сохранение поля в БД
-		db.Save(&accessTimeUrl)
+		db.Save(&accessTimeURL)
 
 		// Берем оригинальную ссылку из выбранного поля по хешу
 		orignURL := linkInfo.OrignURL
@@ -104,13 +104,13 @@ func gormForStates(router chi.Router, format *render.Render) {
 		// Создание среза с типом структура AccessTimeURL (для хранения структур времени доступов)
 		var accessTimeSlice []AccessTimeURL
 
-		// Запрос - получить запись по конкретному
-		db.Where("link_id", linkInfo.ID).Find(&accessTimeSlice)
+		// Запрос - получить запись по конкретному ID хеша и положить все значения в accessTimeSlice
+		db.Where("link_id = ?", linkInfo.ID).Find(&accessTimeSlice)
 
-		// Длина среза accessTimeUrl
+		// Длина среза
 		count := len(accessTimeSlice)
 
-		// инициализируем переменную значением функции timesArrayToStringForShortUrl
+		// Инициализируем переменную значением функции timesArrayToStringForShortUrl
 		strTimes := timesArrayToStringForShortURL(accessTimeSlice)
 
 		type JSONOutput struct {
