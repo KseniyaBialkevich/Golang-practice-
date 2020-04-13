@@ -245,7 +245,6 @@ func handlersForMap(router chi.Router, format *render.Render) {
 
 			for _, value := range mapUserWithFriends {
 				resultString := value.ToString()
-				fmt.Println(resultString)
 				result = append(result, resultString)
 			}
 
@@ -254,7 +253,7 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		}
 	})
 
-	//http://localhost:8080/map/user/{id}/friend
+	//http://localhost:8080/map/user/{id}/friend  //находит в map других пользователей которые записаны в поле Friend
 	router.Get("/user/{id}/friend", func(write http.ResponseWriter, request *http.Request) {
 		id := chi.URLParam(request, "id")
 		idInt, _ := strconv.Atoi(id)
@@ -262,19 +261,40 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		_, ok := mapUserWithFriends[idInt]
 
 		if ok {
-			// for _, value := range mapUserWithFriends {
-			// 	friendsID := value.Friend
+			format.Text(write, 200, "This person has the next friend(s):\n\n")
 
-			UserStruct := mapUserWithFriends[idInt]
+			userStruct := mapUserWithFriends[idInt]
+			deleteIndx := make([]int, 0)
+			isFound := true
 
-			result := fmt.Sprintf("This person has %d friend(s):\n", len(UserStruct.Friend))
-			format.Text(write, 200, result)
+			for idx, valueID := range userStruct.Friend {
+				_, ok := mapUserWithFriends[valueID]
 
-			for _, valueID := range UserStruct.Friend {
-				resultStruct := mapUserWithFriends[valueID]
-				result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\n\n", resultStruct.ID, resultStruct.Name, resultStruct.Surname)
+				if ok {
+					resultStruct := mapUserWithFriends[valueID]
+					result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\n\n", resultStruct.ID, resultStruct.Name, resultStruct.Surname)
+					format.Text(write, 200, result)
+				} else {
+					len := len(userStruct.Friend)
+					firstPart := userStruct.Friend[0:idx]
+					secondPart := userStruct.Friend[idx+1 : len]
+					userStruct.Friend = append(firstPart, secondPart...)
+					deleteIndx = append(deleteIndx, valueID)
+					isFound = false
+				}
+			}
+
+			if isFound == false {
+				var arrayDelFriendID []string
+				for _, value := range deleteIndx {
+					valueStr := strconv.Itoa(value)
+					arrayDelFriendID = append(arrayDelFriendID, valueStr)
+				}
+				strDelFriendID := strings.Join(arrayDelFriendID, ", ")
+				result := fmt.Sprintf("Friend(s) with ID(s) %s was(were) not found and was(were) deleted!", strDelFriendID)
 				format.Text(write, 200, result)
 			}
+
 		} else {
 			result := fmt.Sprintf("User with id %d is not found!", idInt)
 			format.Text(write, 404, result)
