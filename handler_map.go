@@ -212,6 +212,7 @@ func handlersForMap(router chi.Router, format *render.Render) {
 	})
 
 	//http://localhost:8080/map/user/friend //принимает спискок из id других пользователей
+
 	mapUserWithFriends := make(map[int]UserWithFriends)
 
 	router.Post("/user/friend", func(write http.ResponseWriter, request *http.Request) {
@@ -223,7 +224,7 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		ageInt, _ := strconv.Atoi(age)
 		sex := request.FormValue("sex")
 		friend := request.FormValue("friend")
-		friendArray := strings.Split(friend, ",")
+		friendArray := strings.Split(friend, ", ")
 
 		friendsArray := make([]int, 0)
 		for _, elem := range friendArray {
@@ -244,11 +245,39 @@ func handlersForMap(router chi.Router, format *render.Render) {
 
 			for _, value := range mapUserWithFriends {
 				resultString := value.ToString()
+				fmt.Println(resultString)
 				result = append(result, resultString)
 			}
 
 			resultUsersWithFriends := strings.Join(result, "\n")
 			format.Text(write, 200, resultUsersWithFriends)
+		}
+	})
+
+	//http://localhost:8080/map/user/{id}/friend
+	router.Get("/user/{id}/friend", func(write http.ResponseWriter, request *http.Request) {
+		id := chi.URLParam(request, "id")
+		idInt, _ := strconv.Atoi(id)
+
+		_, ok := mapUserWithFriends[idInt]
+
+		if ok {
+			// for _, value := range mapUserWithFriends {
+			// 	friendsID := value.Friend
+
+			UserStruct := mapUserWithFriends[idInt]
+
+			result := fmt.Sprintf("This person has %d friend(s):\n", len(UserStruct.Friend))
+			format.Text(write, 200, result)
+
+			for _, valueID := range UserStruct.Friend {
+				resultStruct := mapUserWithFriends[valueID]
+				result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\n\n", resultStruct.ID, resultStruct.Name, resultStruct.Surname)
+				format.Text(write, 200, result)
+			}
+		} else {
+			result := fmt.Sprintf("User with id %d is not found!", idInt)
+			format.Text(write, 404, result)
 		}
 	})
 }

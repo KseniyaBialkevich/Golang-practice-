@@ -79,6 +79,10 @@ func main() {
 		gormForStates(methodRouter, format)
 	})
 
+	router.Route("/testgorm", func(methodRouter chi.Router) {
+		testgormForStates(methodRouter, format)
+	})
+
 	fmt.Println("Server is running!")
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {
@@ -114,6 +118,11 @@ func (arg User) String() string {
 
 //метод ToString(), форматирующий структуру UserWithFriends в тип string
 func (arg UserWithFriends) ToString() string {
+	// friendStrArray := make([]string, len(arg.Friend))
+	// for _, value := range arg.Friend {
+	// 	friendStr := strconv.Itoa(value)
+	// 	friendStrArray = append(friendStrArray, friendStr)
+	// }
 	result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\nAge: %d\nSex: %s\nFriends: %d\n", arg.ID, arg.Name, arg.Surname, arg.Age, arg.Sex, arg.Friend)
 	return result
 }
