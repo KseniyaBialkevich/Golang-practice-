@@ -224,7 +224,7 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		ageInt, _ := strconv.Atoi(age)
 		sex := request.FormValue("sex")
 		friend := request.FormValue("friend")
-		friendArray := strings.Split(friend, ", ")
+		friendArray := strings.Split(friend, ",")
 
 		friendsArray := make([]int, 0)
 		for _, elem := range friendArray {
@@ -261,39 +261,38 @@ func handlersForMap(router chi.Router, format *render.Render) {
 		_, ok := mapUserWithFriends[idInt]
 
 		if ok {
-			format.Text(write, 200, "This person has the next friend(s):\n\n")
-
 			userStruct := mapUserWithFriends[idInt]
-			deleteIndx := make([]int, 0)
-			isFound := true
 
-			for idx, valueID := range userStruct.Friend {
+			existIndx := make([]int, 0)
+			deleteIndx := make([]int, 0)
+
+			for _, valueID := range userStruct.Friend {
+
 				_, ok := mapUserWithFriends[valueID]
 
 				if ok {
-					resultStruct := mapUserWithFriends[valueID]
-					result := fmt.Sprintf("ID: %d\nName: %s\nSurname: %s\n\n", resultStruct.ID, resultStruct.Name, resultStruct.Surname)
-					format.Text(write, 200, result)
-				} else {
-					len := len(userStruct.Friend)
-					firstPart := userStruct.Friend[0:idx]
-					secondPart := userStruct.Friend[idx+1 : len]
-					userStruct.Friend = append(firstPart, secondPart...)
+					existIndx = append(existIndx, valueID) // составляем новый срез только с найденными пользователями
+				} else { // составляем новый срез только с ненайденными пользователями
 					deleteIndx = append(deleteIndx, valueID)
-					isFound = false
 				}
 			}
 
-			if isFound == false {
-				var arrayDelFriendID []string
-				for _, value := range deleteIndx {
-					valueStr := strconv.Itoa(value)
-					arrayDelFriendID = append(arrayDelFriendID, valueStr)
-				}
-				strDelFriendID := strings.Join(arrayDelFriendID, ", ")
-				result := fmt.Sprintf("Friend(s) with ID(s) %s was(were) not found and was(were) deleted!", strDelFriendID)
+			for _, valueID := range existIndx {
+				resultStruct := mapUserWithFriends[valueID]
+				result := fmt.Sprintf("Friend:\nID: %d\nName: %s\nSurname: %s\n\n", resultStruct.ID, resultStruct.Name, resultStruct.Surname)
 				format.Text(write, 200, result)
 			}
+
+			for _, valueID := range deleteIndx {
+				result := fmt.Sprintf("Friend with ID %d was not found and was deleted.\n", valueID)
+				format.Text(write, 200, result)
+			}
+
+			userStruct.Friend = existIndx
+			resultStr := userStruct.ToString()
+			mapUserWithFriends[idInt] = userStruct                       // ложим копию в оригинал
+			result := fmt.Sprintf("\nUpdated user data:\n%s", resultStr) // выводим обновленные данные пользователя
+			format.Text(write, 200, result)
 
 		} else {
 			result := fmt.Sprintf("User with id %d is not found!", idInt)
